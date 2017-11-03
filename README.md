@@ -163,6 +163,58 @@ Doesn't work in NTSC
 
 Since the VCounter is only a byte it can only store up to 256 values so in order to get 262 scanlines it has to repeat some lines. Using the small screen size as an example, when the VCounter gets to 0xDA it jumps back to 0xD5 and continues to 0xFF and this is how the extra scanlines are made to get a total of 262.
 
+### Control Registers
+
+As previously mentioned, there are 11 conrol registers and they only have write access. Each register is 8-bits but most bits are unused.
+
+Register 0x0:
+* Bit 7 - If set then vertical scrolling for columns 24-31 are disabled.
+* Bit 6 - If set then horizontal scrolling for colums 0-1 are disabled.
+* Bit 5 - If set then column 0 is set to the colour of register 0x7.
+* Bit 4 - If set then line interrupt is enabled.
+* Bit 3 - If set sprites are moved left by 8 pixels.
+* Bit 2 - If set use Mode 4.
+* Bit 1 - If set use Mode 2. Must also be set for mode4 to change screen resolution.
+
+Register 0x1:
+* Bit 6 - If set the screen is enabled.
+* Bit 5 - If set vsync interrupts are enabled.
+* Bit 4 - If set active display has 224 (medium) scanlines. Reg-0 bit-1 must be set.
+* Bit 3 - If set active display has 240 (large) scanlines. Reg-0 bit-1 must be set.
+* Bit 1 - If set sprites are 16x16 otherwise 8x8.
+* Bit 0 - If set sprites are zoomed (double sprite's size).
+
+Register 0x2:
+* Bit 3 - Bit 13 of the name base table address.
+* Bit 2 - Bit 12 of the name base table address.
+* Bit 1 - Bit 11 of the name base table address if resolution is "small" otherwise unused.
+
+Register 0x3 and 0x4:
+* Unused
+
+Register 0x5:
+* Bit 6 - Bit 13 of sprite info base table
+* Bit 5 - Bit 12 of sprite info base table
+* Bit 4 - Bit 11 of sprite info base table
+* Bit 3 - Bit 10 of sprite info base table
+* Bit 2 - Bit  9 of sprite info base table
+* Bit 1 - Bit  8 of sprite info base table
+
+Reister 0x6:
+* Bit 2 - If set sprites use tiles in memory 0x2000 (tiles 256..511), else memory 0x0 (tiles 0 - 256).
+
+Register 0x7:
+* Bits 3-0 - Defines the color to use for the overscan order.
+
+Register 0x8:
+* The entire 8 bit register is the Background X Scrolling position.
+
+Register 0x9:
+* The entire 8 bit register is the Background Y Scrolling position.
+
+Register 0xA:
+* The entire 8 bit register is what the line counter should be set to.
+
 # References
 
 [General - Most Used](http://www.codeslinger.co.uk/pages/projects/mastersystem/hardware.html)
@@ -171,7 +223,7 @@ Since the VCounter is only a byte it can only store up to 256 values so in order
 
 [Hex opcodes](http://www.codeslinger.co.uk/pages/projects/mastersystem/files/z80-1.txt)
 
-[Z80 info](http://www.codeslinger.co.uk/pages/projects/mastersystem/files/Z80.DOC)
+[Z80 Info](http://www.codeslinger.co.uk/pages/projects/mastersystem/files/Z80.DOC)
 
 [Z80 opcodes](http://www.geocities.com/siliconvalley/peaks/3938/z80code.htm)
 
