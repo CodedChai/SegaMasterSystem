@@ -1,4 +1,4 @@
-#"The hipster console of the 8-bit era." - Gaming Historian
+# "The hipster console of the 8-bit era." - Gaming Historian
 
 # The Hardware to Emulate
 
@@ -6,8 +6,6 @@
 * TMS9918a Video Display Processor
 * SN79489 Sound Chip
 * Controllers/Joypads
-
-
 * 256 × 240 max resolution, 32 colors on-screen, 64 colors in palette
 * 8 kB RAM, 16 kB VRAM
 
@@ -131,6 +129,8 @@ Like all the hardware on the SMS the CPU communicates with the VDP by ports and 
 * 0x7F - HCounter(Read Only)
 * 0xBE - Data Port(Read/Write)
 * 0xBF - Control Port(Read/Write)
+
+If a ROM ever tries to write to ports 0x7E-0x7F then it is actually communicating with the sound chip and not the VDP. BUT, when reading from ports 0x7E-0x7F then it is communicating with the VDP not the sound chip. Reading from port 0x7E return the VCounter. The VCounter stores the current line of the active or inactive frame that is being drawn. Reading from port 0x7F returns the HCounter. The HCounter stores which pixel of the current line is being drawn.
 
 # References
 
