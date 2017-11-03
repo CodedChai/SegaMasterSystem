@@ -6,7 +6,7 @@
 * TMS9918a Video Display Processor
 * SN79489 Sound Chip
 * Controllers/Joypads
-* 256 × 240 max resolution, 32 colors on-screen, 64 colors in palette
+* 256x192, 256x224, 256 × 240(Not used for NTSC) resolutions, 32 colors on-screen, 64 colors in palette
 * 8 kB RAM, 16 kB VRAM
 
 # Timing
@@ -132,16 +132,56 @@ Like all the hardware on the SMS the CPU communicates with the VDP by ports and 
 
 If a ROM ever tries to write to ports 0x7E-0x7F then it is actually communicating with the sound chip and not the VDP. BUT, when reading from ports 0x7E-0x7F then it is communicating with the VDP not the sound chip. Reading from port 0x7E return the VCounter. The VCounter stores the current line of the active or inactive frame that is being drawn. Reading from port 0x7F returns the HCounter. The HCounter stores which pixel of the current line is being drawn.
 
+### Interrupts
+
+The screen draws at either a rate of 50Hz(PAL) or 60Hz(NTSC). Every screen redraw is called a frame. Each frame has an active period and an inactive period. The active period is when the VDP is actually drawing one of the visible lines of the screen and the inactive period is when it has drawn all the visible lines of the screen. The inactive period is very important to programmers because they can program the VDP in ways they couldn't while it was in an active period, like change the vertical scroll value. So whenever the VDP leaves teh active period and enters the inactive period it tries to signal an interrupt so the ROM becomes aware of this. However, VDP interrupts can be ignored. When the VDP enters the inactive display period it sets bit-7 to show there is a VSync interrupt pending. However, a VSync interrupt is only requested if bit-7 of the status flag is set and the bit-5 of control register 1 is set. Iff both flags are set the VDP requests a VSync interrupt which the CPU can either respond to or ignore.
+
+There is another VDP interrupt called the line interrupt. This is a value set by the programmer which counts down during the active display period and the first line of the inactive display period each time the VDP moves onto a new scanline. This is so the programmer can be informed of when the VDP starts drawing a specific scanline. If the line counter goes below zero and bit-4 of control register 0 is set then the VDP will request an interrupt and the line counter is reset to the value of register 10 when the current scanline is past the FIRST scanline of the inactive display period. If the CPU decides to ignore the VDP interrupt then the request is lost so this interrupt is either handled immediately or not at all. 
+
+
+### Resolution
+
+I will only focus on the NTSC version which has 262 scanlines.
+
+```
+Small
+NTSC 256x192 
+0-191 = Active Display
+192-255 = Inactive Display
+VCounter Values = 0x0-0xDA, 0xD5-0xFF
+
+Medium
+NTSC 256x224
+0-223 = Active Display
+224-255 = Inactive Display
+VCounter Values = 0x0-0xEA, 0x0E5-0xFF
+
+Large
+NTSC 256x240
+Doesn't work in NTSC
+```
+
+Since the VCounter is only a byte it can only store up to 256 values so in order to get 262 scanlines it has to repeat some lines. Using the small screen size as an example, when the VCounter gets to 0xDA it jumps back to 0xD5 and continues to 0xFF and this is how the extra scanlines are made to get a total of 262.
+
 # References
 
 [General - Most Used](http://www.codeslinger.co.uk/pages/projects/mastersystem/hardware.html)
+
 [Basically Everything](www.smspower.org)
+
 [Hex opcodes](http://www.codeslinger.co.uk/pages/projects/mastersystem/files/z80-1.txt)
+
 [Z80 info](http://www.codeslinger.co.uk/pages/projects/mastersystem/files/Z80.DOC)
+
 [Z80 opcodes](http://www.geocities.com/siliconvalley/peaks/3938/z80code.htm)
+
 [Z80 Flag Affection](http://www.z80.info/z80sflag.htm)
 [Memory Mapping](http://www.smspower.org/dev/docs/wiki/MemorySystem/Mapper)
+
 [Video Display Processor Documentation](http://www.smspower.org/dev/docs/#Video)
+
 [Extra VDP Documentation](http://www.smspower.org/dev/docs/)
+
 [Edge cases for VDP](http://www.smspower.org/dev/docs/#Video)
+
 [Sound Chip](http://www.smspower.org/dev/docs/#Sound)
