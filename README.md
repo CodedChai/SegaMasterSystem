@@ -1,4 +1,4 @@
-"The hipster console of the 8-bit era." - Gaming Historian
+#"The hipster console of the 8-bit era." - Gaming Historian
 
 # The Hardware to Emulate
 
@@ -8,7 +8,7 @@
 * Controllers/Joypads
 
 
-* 256 × 192 resolution, 32 colors on-screen
+* 256 × 240 max resolution, 32 colors on-screen, 64 colors in palette
 * 8 kB RAM, 16 kB VRAM
 
 # Timing
@@ -92,6 +92,45 @@ The interrupt register works with interrupt mode 2.
 * Bit 2 - (P/V) Parity or Overflow Flag: The Parity or Overflow flag has two meanings. Some instructions use the parity flag which means it gets set if the result of the operation has an even number of bits set. The overflow flag is used by some instructions when the 2-complement of the result does not fit within the register.
 * Bit 1 - (N) Subtract Flag: The subtract flag is simply set when the instruction is a subtraction.
 * Bit 0 - (C) Carry flag: The carry flag is set when the instruction overflows its upper or lower limits.
+
+### Program Counter and Stack Pointer
+
+The program counter points to the address of the next opcode in memory to execute. The stack pointer points to the next address space where a value that gets added to the stack is stored. The stack is initialized to address 0xDFF0 so if a value is pushed to the stack it gets added to and the stack pointer gets decremented to 0xDFEF. 
+
+Both program counter and stack pointer need to be of size WORD since the address space is 0x10000 in size. This size will also be applied to the refresh register and interrupt register.
+
+# VDP
+
+It is a Texas Instruments TMS9918a and there is a lot to it.
+
+### VDP Memory Map
+
+* 0x0000 - 0x1FFF = Sprite/Tile Patterns (numbers 0-255) 
+* 0x2000 - 0x37FF = Sprite/Tile Patterns (numbers 256-447)
+* 0x3800 - 0x3EFF = Name Table 
+* 0x3F00 - 0x3FFF = Sprite Info Table
+
+HOWEVER, the name table and sprite info table don't always begin at address 0x3800 and 0x3F00 and can be changed. There is also Color RAM(CRAM) which holds 2 16-bit color palettes.
+
+### Tile and Sprite Rendering
+
+The screen is made up of tiles which represent the background. Each tile in memory is made up of 64 pixels, 8x8 sprites. To draw the background you read the contents of the name table which will give you all the tile numbers from left to right and top to bottom of the screen. Each tile number can then be looked up in the sprite/tile patterns number which gives the color of each of the 64 pixels of that sprite/tile. The screen is also made up of active objects. These sprites are usually drawn on top of the background and can be 8x8 or 16x16. It is also possible to zoom sprites which doubles the sprite size, so 8x8 becomes 16x16 and 16x16 becomes 32x32. The sprite info table specifies where on screen the sprite pattern is drawn. So the sprite pattern is looked up in the sprite info table and drawn the same way as the background.
+
+### Overview of Registers, Modes and Ports
+
+The VDP has 11 control registers and 1 status register. The status register is a BYTE in size but only bits 5-7 are used like so:
+* Bit 7 - VSync Interrupt Pending
+* Bit 6 - Sprite Overflow
+* Bit 5 - Sprite Collision
+* Bits 4-0 - N/A
+
+The VDP can have its mode changed which will change how the tiles and sprites are rendered and also how the status register and the control registers are interpreted. The SMS only uses mode 2 and mode 4. In fact, every game uses mode 4 except for a game called F-16 Fighter which uses mode 2(from what I can tell).
+
+Like all the hardware on the SMS the CPU communicates with the VDP by ports and it is the ports that the programmer uses to control the VDP. The ports are:
+* 0x7E - VCounter(Read Only)
+* 0x7F - HCounter(Read Only)
+* 0xBE - Data Port(Read/Write)
+* 0xBF - Control Port(Read/Write)
 
 # References
 
