@@ -1,5 +1,7 @@
 # "The hipster console of the 8-bit era." - Gaming Historian
 
+The SMS was Sega's much more powerful competitor to the NES. It really only found commercial success in Brazil and is still sold there today. It is known for having games such as Phantasy Star and Psycho Fox.
+
 # The Hardware to Emulate
 
 * Z80 Processor
@@ -214,6 +216,36 @@ Register 0x9:
 
 Register 0xA:
 * The entire 8 bit register is what the line counter should be set to.
+
+### Rendering in Mode 4
+
+Sprites are rendered before the backround. The VDP is limited to 8 sprites on any snaline. There are 64 sprites available to draw which are referenced in the sprite attribute table. Sprites can not be scrolled. It is drawn one line at a time. 
+
+Rendering backgrounds is very similar to rendering sprites but there's priorities, scrolling and masking. 
+
+# Joypads
+
+Each joypad button has its own bit in a read only joypad status register. There are two joypad status registers which the game can read. PortA is port number 0xDC and is mirrored at 0xC0. PortB is port number 0xDD and is mirrored at 0xC1.
+
+PortA:
+* Bit 7: Joypads 2 down button 
+* Bit 6: Joypads 2 up button
+* Bit 5: Joypads 1 Fire B
+* Bit 4: Joypads 1 Fire A
+* Bit 3: Joypads 1 Right Button
+* Bit 2: Joypads 1 Left Button
+* Bit 1: Joypads 1 Down Button
+* Bit 0: Joypads 1 Up Button
+
+PortB:
+* Bit 7: Unused... Lightgun? 
+* Bit 6: Unused... Lightgun? 
+* Bit 5: Unused 
+* Bit 4: Reset Button
+* Bit 3: Joypads 2 Fire B
+* Bit 2: Joypads 2 Fire A
+Bit 1: Joypads 2 Right Button
+Bit 0: Joypads 2 Left Button
 
 # References
 
