@@ -228,24 +228,63 @@ Rendering backgrounds is very similar to rendering sprites but there's prioritie
 Each joypad button has its own bit in a read only joypad status register. There are two joypad status registers which the game can read. PortA is port number 0xDC and is mirrored at 0xC0. PortB is port number 0xDD and is mirrored at 0xC1.
 
 PortA:
-* Bit 7: Joypads 2 down button 
-* Bit 6: Joypads 2 up button
-* Bit 5: Joypads 1 Fire B
-* Bit 4: Joypads 1 Fire A
-* Bit 3: Joypads 1 Right Button
-* Bit 2: Joypads 1 Left Button
-* Bit 1: Joypads 1 Down Button
-* Bit 0: Joypads 1 Up Button
+* Bit 7 - Joypads 2 down button 
+* Bit 6 - Joypads 2 up button
+* Bit 5 - Joypads 1 Fire B
+* Bit 4 - Joypads 1 Fire A
+* Bit 3 - Joypads 1 Right Button
+* Bit 2 - Joypads 1 Left Button
+* Bit 1 - Joypads 1 Down Button
+* Bit 0 - Joypads 1 Up Button
 
 PortB:
-* Bit 7: Unused... Lightgun? 
-* Bit 6: Unused... Lightgun? 
-* Bit 5: Unused 
-* Bit 4: Reset Button
-* Bit 3: Joypads 2 Fire B
-* Bit 2: Joypads 2 Fire A
-Bit 1: Joypads 2 Right Button
-Bit 0: Joypads 2 Left Button
+* Bit 7 - Unused 
+* Bit 6 - Unused 
+* Bit 5 - Unused 
+* Bit 4 - Reset Button
+* Bit 3 - Joypads 2 Fire B
+* Bit 2 - Joypads 2 Fire A
+* Bit 1 - Joypads 2 Right Button
+* Bit 0 - Joypads 2 Left Button
+
+# Interrupts 
+
+The SMS has 3 hardware interrupts, when a piece of hardware signals to the VPU to stop doing what it's currently doing to do something that is deemed immediately important. The interrupts are VSync, line counter and the reset interrupt. The first two can be ignored by the CPU whereas the reset interrupt is always accepted. 
+
+# PSG
+
+The PSG is a Texas Instruments SN79489. The sound chip has 4 different channels, three tone channels and one noise channel. Each channel can have a different volume and different frequency. To change the volumes and frequency of the channels, data is written to port 0x7F which is also mirrored to 0x7E.
+
+The clock is the same as the Z80 and each channel has a counter which is set to its frequency. Every 224kHz each channels counter is decremented and then the output of all channels is combined and added to the playback buffer. When one of the counters reaches - then it is reset to the value of the channels frequency and the polarity of the output for this channel is changed.
+
+### Square Waves
+
+Square waves are pretty simple, they either output 1 or -1 if they're signed or output 1 or o if they're unsigned. However, using signed square waves will be simpler since you just have to add up the values of the 4 channels. You just have to make sure that you multiply each channel by it's volume before adding them together.
+
+### PSG Registers
+
+Each channel has 2 registers associated with it. The first channel register is the volume which is a 4-bit register. The second channel register is the tone register which is a 10-bit register that holds the frequency. However, on the noise channel the tone register is ounly 4-bits. The volume registers are set to 0xF and the tone registers are set to 0x0 on startup.
+
+### PSG Channel Volume
+
+0x0 actually means full volume and 0xF is muted. The volume increments by 2db. The volume register should be 8-bits even though only the lower 4-bits are used. The most common value type for the playback buffer are signed 16-bit samples. The minimum would be -32768 and the maximum would be 32767. To ensure we don't overflow the playback buffer the volume channel should max out at 8000. This will guarantee that the playback buffer will never get overflown.
+
+### Writing Data to PSG
+
+Sound data is written to the PSG through ports 0x7F and 0x7E. The PSG has a latch which is the current register where the data byte is designed for. The initially lathed register is Channel0s tone register. The data byte written takes one of two forms. Form 1 changes the current latched register and updates its data. Form 2 is data intended to be written to the currently latched register. The 2 different data types should be interpreted like so:
+
+* Type 1 - 1ccrdddd
+* Type 2 - 0xdddddd
+
+So you can identify the two data types by bit-7.
+
+#### Type 1
+
+If the data byte being written to the PSG port has bit-7 set then this is how the data should be interpreted. This data byte is designed to update the currently latched register and then update its data. Bits 6-5 represent which channel needs to be latched. Bit-4 is whther you need to latch a volume(1) or tone(0) register. The remaining 4-bits are the data that updates the LOWER 4-bits of the newly latched register. So if the newly latched register is a colume register then the lower 4-bits of the 8-bit register is updated and the upper 4-bits are left unchanged, the entire 4-bits of the noise register would get updated and the upper 6-bits of the 10-bit tone register would go unchanged.
+
+#### Type 2
+
+If the currently latched register is a tone register then the lower 6-bits of the data byte is used to update the upper 6-bits of the 10-bit tone register leaving the bottom 4-bits unchanged. If it is latched to a noise or volume register it only uses the lower 4 bits to update it.
 
 # References
 
