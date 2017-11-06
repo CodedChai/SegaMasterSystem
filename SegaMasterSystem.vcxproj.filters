@@ -18,8 +18,19 @@
     <ClInclude Include="Z80.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="Defines.h">
+    <ClInclude Include="Config.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="MasterSystem.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Z80.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

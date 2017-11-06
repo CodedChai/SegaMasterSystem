@@ -99,6 +99,15 @@ The program counter points to the address of the next opcode in memory to execut
 
 Both program counter and stack pointer need to be of size WORD since the address space is 0x10000 in size. This size will also be applied to the refresh register and interrupt register.
 
+### Opcode Prefixes
+
+* CB prefix is a rotate, shift or bit test/set/reset instruction.
+* DD prefix is executed as is, but if the HL register is supposed to be used the IX register is used instead.
+* FD prefix is like the DD prefix except IY is used instead of IX.
+* ED prefix, tons of undocumented EDxx instructions but most are duplicates and some behave like 2 NOP instructions. 
+* DDCB prefix store the result(if any) of the operation in one of the seven general registers, the lower 3 bits of the last byte of the opcode determine which register.
+* FDCB prefix is the same as DDCB except it uses IY instead of IX.
+
 # VDP
 
 It is a Texas Instruments TMS9918a and there is a lot to it.
@@ -290,15 +299,18 @@ If the currently latched register is a tone register then the lower 6-bits of th
 
 [General - Most Used](http://www.codeslinger.co.uk/pages/projects/mastersystem/hardware.html)
 
-[Basically Everything](www.smspower.org)
+[Basically Everything is Here](www.smspower.org)
 
-[Hex opcodes](http://www.codeslinger.co.uk/pages/projects/mastersystem/files/z80-1.txt)
+[Hex opcodes](http://clrhome.org/table/)
 
-[Z80 Info](http://www.codeslinger.co.uk/pages/projects/mastersystem/files/Z80.DOC)
+[Z80 Manual](http://www.smspower.org/uploads/Development/z80cpu_um.zip)
 
-[Z80 opcodes](http://www.geocities.com/siliconvalley/peaks/3938/z80code.htm)
+[Undocumented Z80 Info](http://www.smspower.org/uploads/Development/z80-documented.pdf?sid=d5d37285c1ed4e0ad0ffe94266d31197)
 
-[Z80 Flag Affection](http://www.z80.info/z80sflag.htm)
+[Z80 Opcodes](http://www.z80.info/z80oplist.txt)
+
+[Random Blog That May Be Useful](http://floooh.github.io/2016/07/12/z80-rust-ms1.html)
+
 [Memory Mapping](http://www.smspower.org/dev/docs/wiki/MemorySystem/Mapper)
 
 [Video Display Processor Documentation](http://www.smspower.org/dev/docs/#Video)
