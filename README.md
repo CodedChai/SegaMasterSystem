@@ -320,3 +320,5 @@ If the currently latched register is a tone register then the lower 6-bits of th
 [Edge cases for VDP](http://www.smspower.org/dev/docs/#Video)
 
 [Sound Chip](http://www.smspower.org/dev/docs/#Sound)
+
+[Amazing Write-up](http://www.smspower.org/uploads/Development/JavaGear-Report.pdf)
