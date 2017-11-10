@@ -533,203 +533,300 @@ void Z80::CPU_16BIT_LOAD(WORD& reg) {
 }
 
 void Z80::CPU_JUMP(bool useCondition, int flag, bool condition) {
+	m_ContextZ80.m_OpcodeCycle = 10;
 
+	if (!useCondition) {
+		WORD nn = ReadWord();
+		m_ContextZ80.m_ProgramCounter += 2;
+		m_ContextZ80.m_ProgramCounter = nn;
+		return;
+	}
+
+	if (TestBit(m_ContextZ80.m_RegisterAF.lo, flag) == condition) {
+		WORD nn = ReadWord();
+		m_ContextZ80.m_ProgramCounter = nn;
+	}
+	else {
+		m_ContextZ80.m_ProgramCounter += 2;
+	}
 }
+
 void Z80::CPU_JUMP_IMMEDIATE(bool useCondition, int flag, bool condition) {
+	m_ContextZ80.m_OpcodeCycle = 12;
 
+	if (!useCondition) {
+		SIGNED_BYTE n = (SIGNED_BYTE)m_ContextZ80.m_FuncPtrRead(m_ContextZ80.m_ProgramCounter);
+		m_ContextZ80.m_ProgramCounter += n;
+	}
+	else if (TestBit(m_ContextZ80.m_RegisterAF.lo, flag) == condition) {
+		SIGNED_BYTE n = m_ContextZ80.m_FuncPtrRead(m_ContextZ80.m_ProgramCounter);
+		m_ContextZ80.m_ProgramCounter += n;
+	}
+	else {
+		m_ContextZ80.m_OpcodeCycle = 7;
+	}
+	m_ContextZ80.m_ProgramCounter++;
 }
-void Z80::CPU_LOAD_NNN(WORD reg) {
 
+void Z80::CPU_LOAD_NNN(WORD reg) {
+	WORD nn = ReadWord();
+	m_ContextZ80.m_ProgramCounter += 2;
+	m_ContextZ80.m_OpcodeCycle = 16;
+	m_ContextZ80.m_FuncPtrWrite(nn, reg & 0xFF);
+	m_ContextZ80.m_FuncPtrWrite(nn + 1, reg >> 8);
 }
 void Z80::CPU_NEG() {
 
 }
+
 void Z80::CPU_CALL(bool useCondition, int flag, bool condition) {
 
 }
+
 void Z80::CPU_RETURN(bool useCondition, int flag, bool condition) {
 
 }
+
 void Z80::CPU_RESTARTS(BYTE n) {
 
 }
+
 void Z80::CPU_RLC(BYTE& reg, bool isAReg) {
 
 }
+
 void Z80::CPU_RLC_MEM(WORD address, bool isAReg) {
 
 }
+
 void Z80::CPU_RRC(BYTE& reg, bool isAReg) {
 
 }
+
 void Z80::CPU_RRC_MEM(WORD address, bool isAReg) {
 
 }
+
 void Z80::CPU_DDFD_RLC(BYTE& reg, WORD& ixiyreg, SIGNED_BYTE& displacement) {
 
 }
+
 void Z80::CPU_DDFD_RRC(BYTE& reg, WORD& ixiyreg, SIGNED_BYTE& displacement) {
 
 }
+
 void Z80::CPU_DAA() {
 
 }
+
 void Z80::CPU_RL(BYTE& reg, bool isAReg) {
 
 }
+
 void Z80::CPU_RL_MEM(WORD address, bool isAReg) {
 
 }
+
 void Z80::CPU_RR(BYTE& reg, bool isAReg) {
 
 }
+
 void Z80::CPU_RR_MEM(WORD address, bool isAReg) {
 
 }
+
 void Z80::CPU_DDFD_RL(BYTE& reg, WORD& ixiyreg, SIGNED_BYTE& displacement) {
 
 }
+
 void Z80::CPU_DDFD_RR(BYTE& reg, WORD& ixiyreg, SIGNED_BYTE& displacement) {
 
 }
+
 void Z80::CPU_RLD() {
 
 }
+
 void Z80::CPU_RRD() {
 
 }
+
 void Z80::CPU_SLA(BYTE& reg) {
 
 }
+
 void Z80::CPU_SLA_MEM(WORD address) {
 
 }
+
 void Z80::CPU_SRA(BYTE& reg) {
 
 }
+
 void Z80::CPU_SRA_MEM(WORD address) {
 
 }
+
 void Z80::CPU_SRL(BYTE& reg) {
 
 }
+
 void Z80::CPU_SRL_MEM(WORD address) {
 
 }
+
 void Z80::CPU_SLL(BYTE& reg) {
 
 }
+
 void Z80::CPU_SLL_MEM(WORD address) {
 
 }
+
 void Z80::CPU_DDFD_SLA(BYTE& reg, WORD& ixiyreg, SIGNED_BYTE& displacement) {
 
 }
+
 void Z80::CPU_DDFD_SRA(BYTE& reg, WORD& ixiyreg, SIGNED_BYTE& displacement) {
 
 }
+
 void Z80::CPU_DDFD_SRL(BYTE& reg, WORD& ixiyreg, SIGNED_BYTE& displacement) {
 
 }
+
 void Z80::CPU_DDFD_SLL(BYTE& reg, WORD& ixiyreg, SIGNED_BYTE& displacement) {
 
 }
+
 void Z80::CPU_RESET_BIT(BYTE& reg, int bit) {
 
 }
+
 void Z80::CPU_DDFD_RESET_BIT(BYTE& reg, int bit, WORD& ixiyreg, SIGNED_BYTE& displacement) {
 
 }
+
 void Z80::CPU_RESET_BIT_MEM(WORD address, int bit) {
 
 }
+
 void Z80::CPU_TEST_BIT(BYTE reg, int bit, int cycles) {
 
 }
+
 void Z80::CPU_DDFD_TEST_BIT(BYTE& reg, int bit, WORD& ixiyreg, SIGNED_BYTE& displacement) {
 
 }
+
 void Z80::CPU_SET_BIT(BYTE& reg, int bit) {
 
 }
+
 void Z80::CPU_DDFD_SET_BIT(BYTE& reg, int bit, WORD& ixiyreg, SIGNED_BYTE& displacement) {
 
 }
+
 void Z80::CPU_SET_BIT_MEM(WORD address, int bit) {
 
 }
+
 void Z80::CPU_IN(BYTE& data) {
 
 }
+
 void Z80::CPU_IN_IMMEDIATE(BYTE& data) {
 
 }
+
 void Z80::CPU_OUT(const BYTE& address, const BYTE& data) {
 
 }
+
 void Z80::CPU_OUT_IMMEDIATE(const BYTE& data) {
 
 }
+
 void Z80::CPU_OUTI() {
 
 }
+
 void Z80::CPU_OTIR() {
 
 }
+
 void Z80::CPU_OUTD() {
 
 }
+
 void Z80::CPU_OUTDR() {
 
 }
+
 void Z80::CPU_CPI() {
 
 }
+
 void Z80::CPU_CPIR() {
 
 }
+
 void Z80::CPU_CPD() {
 
 }
+
 void Z80::CPU_CPDR() {
 
 }
+
 void Z80::CPU_INI() {
 
 }
+
 void Z80::CPU_INIR() {
 
 }
+
 void Z80::CPU_IND() {
 
 }
+
 void Z80::CPU_INDR() {
 
 }
+
 void Z80::CPU_LDI() {
 
 }
+
 void Z80::CPU_LDIR() {
 
 }
+
 void Z80::CPU_DJNZ() {
 
 }
+
 void Z80::CPU_LDD() {
 
 }
+
 void Z80::CPU_LDDR() {
 
 }
+
 void Z80::CPU_LDA_I() {
 
 }
+
 void Z80::CPU_LDA_R() {
 
 }
+
 void Z80::CPU_REG_LOAD_NNN(WORD& reg) {
 
 }
+
 void Z80::CPU_EXCHANGE(WORD& reg1, WORD& reg2) {
 
 }
