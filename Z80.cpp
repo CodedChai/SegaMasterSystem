@@ -434,29 +434,104 @@ void Z80::CPU_8BIT_MEM_DEC(WORD address, int cycles) {
 	else
 		m_ContextZ80.m_RegisterAF.lo = BitReset(m_ContextZ80.m_RegisterAF.lo, FLAG_PV);
 }
+
 void Z80::CPU_8BIT_IXIY_LOAD(BYTE& store, const Z80REGISTER& reg) {
 	CPU_REG_LOAD_ROM(store, GetIXIYAddress(reg.reg));
 	m_ContextZ80.m_OpcodeCycle = 11;
 }
+
 void Z80::CPU_8BIT_MEM_IXIY_LOAD(BYTE store, const Z80REGISTER& reg) {
 	m_ContextZ80.m_FuncPtrWrite(GetIXIYAddress(reg.reg), store);
 	m_ContextZ80.m_OpcodeCycle = 19;
 }
+
 void Z80::CPU_16BIT_INC(WORD& word, int cycles) {
-
+	m_ContextZ80.m_OpcodeCycle = cycles;
+	word++;
 }
+
 void Z80::CPU_16BIT_DEC(WORD& word, int cycles) {
-
+	m_ContextZ80.m_OpcodeCycle = cycles;
+	word--;
 }
+
 void Z80::CPU_16BIT_ADD(WORD& reg, WORD toAdd, int cycles, bool addCarry) {
+	m_ContextZ80.m_OpcodeCycle = cycles;
+	WORD before = reg;
+	unsigned int adding = toAdd;
 
+	if (addCarry) {
+		if (TestBit(m_ContextZ80.m_RegisterAF.lo, FLAG_C)) {
+			adding++;
+		}
+	}
+
+	unsigned long result = before + adding;
+
+	m_ContextZ80.m_RegisterAF.lo = BitReset(m_ContextZ80.m_RegisterAF.lo, FLAG_N);
+
+	if(result & 0xFFFF0000)
+		m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_C);
+	else
+		m_ContextZ80.m_RegisterAF.lo = BitReset(m_ContextZ80.m_RegisterAF.lo, FLAG_C);
+
+	if(((before & 0x0FFF) + (adding & 0x0FFF)) > 0x0FFF)
+		m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_H);
+	else 
+		m_ContextZ80.m_RegisterAF.lo = BitReset(m_ContextZ80.m_RegisterAF.lo, FLAG_H);
+
+	if (addCarry) {
+		if(!((before ^ adding) & 0x8000) && ((before ^ reg) & 0x8000))
+			m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_PV);
+		else
+			m_ContextZ80.m_RegisterAF.lo = BitReset(m_ContextZ80.m_RegisterAF.lo, FLAG_PV);
+
+		if(reg == 0)
+			m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_Z);
+		else
+			m_ContextZ80.m_RegisterAF.lo = BitReset(m_ContextZ80.m_RegisterAF.lo, FLAG_Z);
+
+		if(TestBit(reg, 15))
+			m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_S);
+		else
+			m_ContextZ80.m_RegisterAF.lo = BitReset(m_ContextZ80.m_RegisterAF.lo, FLAG_S);
+	}
 }
+
 void Z80::CPU_16BIT_SUB(WORD& reg, WORD toSub, int cycles, bool subCarry) {
+	m_ContextZ80.m_OpcodeCycle = cycles;
+	WORD before = reg;
+	int c = TestBit(m_ContextZ80.m_RegisterAF.lo, FLAG_C) ? 1 : 0;
+	int res = reg - toSub - c;
 
+	m_ContextZ80.m_RegisterAF.lo = 0;
+
+	if(res & 0x10000)
+		m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_C);
+
+	if(((before ^ res ^ toSub) >> 8) & 0x10)
+		m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_H);
+
+	m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_N);
+
+	if(!(res & 0xFFFF))
+		m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_Z);
+
+	if((toSub ^ before) & (before ^ res) & 0x8000)
+		m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_PV);
+
+	reg = res & 0xFFFF;
+
+	if(TestBit(reg, 15))
+		m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_S);
 }
+
 void Z80::CPU_16BIT_LOAD(WORD& reg) {
-
+	m_ContextZ80.m_OpcodeCycle = 10;
+	reg = ReadWord();
+	m_ContextZ80.m_ProgramCounter += 2;
 }
+
 void Z80::CPU_JUMP(bool useCondition, int flag, bool condition) {
 
 }
