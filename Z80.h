@@ -86,6 +86,8 @@ private:
 
 	// Instructions
 	void CPU_8BIT_LI(BYTE& reg);
+	void CPU_REG_LOAD(BYTE& reg, BYTE load);
+	void CPU_REG_LOAD_ROM(BYTE& reg, WORD address);
 	void CPU_8BIT_ADD(BYTE& reg, BYTE toAdd, int cycles, bool useImmediate, bool addCarry);
 	void CPU_8BIT_SUB(BYTE& reg, BYTE toSub, int cycles, bool useImmediate, bool subCarry);
 	void CPU_8BIT_AND(BYTE& reg, BYTE toAnd, int cycles, bool useImmediate);
@@ -96,8 +98,8 @@ private:
 	void CPU_8BIT_DEC(BYTE& reg, int cycles);
 	void CPU_8BIT_MEM_INC(WORD address, int cycles);
 	void CPU_8BIT_MEM_DEC(WORD address, int cycles);
-	void CPU_8BIT_IXIY_LOAD(BYTE& store, const Z80REGISTER& re);
-	void CPU_8BIT_MEM_IXIY_LOAD(BYTE store, const Z80REGISTER& re);
+	void CPU_8BIT_IXIY_LOAD(BYTE& store, const Z80REGISTER& reg);
+	void CPU_8BIT_MEM_IXIY_LOAD(BYTE store, const Z80REGISTER& reg);
 	void CPU_16BIT_INC(WORD& word, int cycles);
 	void CPU_16BIT_DEC(WORD& word, int cycles);
 	void CPU_16BIT_ADD(WORD& reg, WORD toAdd, int cycles, bool addCarry);
@@ -105,8 +107,6 @@ private:
 	void CPU_16BIT_LOAD(WORD& reg);
 	void CPU_JUMP(bool useCondition, int flag, bool condition);
 	void CPU_JUMP_IMMEDIATE(bool useCondition, int flag, bool condition);
-	void CPU_REG_LOAD();
-	void CPU_REG_LOAD_ROM();
 	void CPU_LOAD_NNN(WORD reg);
 	void CPU_NEG();
 	void CPU_CALL(bool useCondition, int flag, bool condition);
