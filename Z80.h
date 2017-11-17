@@ -155,9 +155,9 @@ private:
 	void CPU_OTIR();
 	void CPU_OUTD();
 	void CPU_OUTDR();
-	void CPU_CPI();
+	BYTE CPU_CPI();
 	void CPU_CPIR();
-	void CPU_CPD();
+	BYTE CPU_CPD();
 	void CPU_CPDR();
 	void CPU_INI();
 	void CPU_INIR();

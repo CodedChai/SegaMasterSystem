@@ -576,7 +576,33 @@ void Z80::CPU_LOAD_NNN(WORD reg) {
 	m_ContextZ80.m_FuncPtrWrite(nn + 1, reg >> 8);
 }
 void Z80::CPU_NEG() {
+	BYTE before = m_ContextZ80.m_RegisterAF.hi;
 
+	m_ContextZ80.m_RegisterAF.lo = 0;
+	m_ContextZ80.m_RegisterAF.lo = 0 - m_ContextZ80.m_RegisterAF.hi;
+	m_ContextZ80.m_OpcodeCycle = 8;
+
+	BYTE a = m_ContextZ80.m_RegisterAF.hi;
+
+	m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_N);
+
+	if (a == 0) 
+		m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_Z);
+
+	if (a > 127) 
+		m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_S);
+	
+	SIGNED_WORD htest = 0;
+	htest -= (before & 0xF);
+
+	if(htest < 0)
+		m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_H);
+
+	if(before == 128)
+		m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_PV);
+
+	if(before != 0)
+		m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_C);
 }
 
 void Z80::CPU_CALL(bool useCondition, int flag, bool condition) {
@@ -643,12 +669,91 @@ void Z80::CPU_DDFD_RR(BYTE& reg, WORD& ixiyreg, SIGNED_BYTE& displacement) {
 
 }
 
+// Could have cycle count of 2 instead(?)
 void Z80::CPU_RLD() {
+	m_ContextZ80.m_OpcodeCycle = 5;
+	BYTE hldata = m_ContextZ80.m_FuncPtrRead(m_ContextZ80.m_RegisterHL.reg);
+	BYTE nibbleloA = m_ContextZ80.m_RegisterAF.hi & 0xF;
+	BYTE nibbleloHL = hldata & 0xF;
+	BYTE nibblehiHL = hldata >> 4;
 
+	m_ContextZ80.m_RegisterAF.hi &= 0xF0;
+	m_ContextZ80.m_RegisterAF.hi |= nibblehiHL;
+	hldata = nibbleloHL << 4;
+	hldata |= nibbleloA;
+
+	m_ContextZ80.m_FuncPtrWrite(m_ContextZ80.m_RegisterHL.reg, hldata);
+
+	BYTE a = m_ContextZ80.m_RegisterAF.hi;
+	BYTE& f = m_ContextZ80.m_RegisterAF.lo;
+
+	if (TestBit(a, 7))
+		f = BitSet(f, FLAG_S);
+	else
+		f = BitReset(f, FLAG_S);
+
+	if (a == 0)
+		f = BitSet(f, FLAG_Z);
+	else
+		f = BitReset(f, FLAG_Z);
+
+	f = BitReset(f, FLAG_H);
+	f = BitReset(f, FLAG_N);
+
+	int pcount = 0;
+	for (int i = 0; i < 8; i++) {
+		if (TestBit(a, i))
+			pcount++;
+	}
+
+	if ((pcount == 0) || ((pcount % 2) == 0))
+		f = BitSet(f, FLAG_PV);
+	else
+		f = BitReset(f, FLAG_PV);
 }
 
+// Could have cycle count of 2 instead(?)
 void Z80::CPU_RRD() {
+	m_ContextZ80.m_OpcodeCycle = 5;
+	BYTE hldata = m_ContextZ80.m_FuncPtrRead(m_ContextZ80.m_RegisterHL.reg);
+	BYTE nibbleloA = m_ContextZ80.m_RegisterAF.hi & 0xF;
+	BYTE nibbleloHL = hldata & 0xF;
+	BYTE nibblehiHL = hldata >> 4;
 
+	m_ContextZ80.m_RegisterAF.hi &= 0xF0;
+	m_ContextZ80.m_RegisterAF.hi |= nibbleloHL;
+	hldata = nibbleloA << 4;
+	hldata |= nibblehiHL;
+
+	m_ContextZ80.m_FuncPtrWrite(m_ContextZ80.m_RegisterHL.reg, hldata);
+
+	BYTE a = m_ContextZ80.m_RegisterAF.hi;
+	BYTE& f = m_ContextZ80.m_RegisterAF.lo;
+
+	if (TestBit(a, 7))
+		f = BitSet(f, FLAG_S);
+	else
+		f = BitReset(f, FLAG_S);
+
+	if (a == 0)
+		f = BitSet(f, FLAG_Z);
+	else
+		f = BitReset(f, FLAG_Z);
+
+	f = BitReset(f, FLAG_H);
+	f = BitReset(f, FLAG_N);
+
+	int pcount = 0;
+	for (int i = 0; i < 8; i++)
+	{
+		if (TestBit(a, i))
+			pcount++;
+	}
+
+	if ((pcount == 0) || ((pcount % 2) == 0))
+		f = BitSet(f, FLAG_PV);
+	else
+		f = BitReset(f, FLAG_PV);
 }
 
 void Z80::CPU_SLA(BYTE& reg) {
@@ -699,16 +804,26 @@ void Z80::CPU_DDFD_SLL(BYTE& reg, WORD& ixiyreg, SIGNED_BYTE& displacement) {
 
 }
 
+// WHEN EDITING THIS ALSO EDIT CPU_RESET_BIT_MEM
 void Z80::CPU_RESET_BIT(BYTE& reg, int bit) {
-
+	reg = BitReset(reg, bit);
+	m_ContextZ80.m_OpcodeCycle = 8;
 }
 
 void Z80::CPU_DDFD_RESET_BIT(BYTE& reg, int bit, WORD& ixiyreg, SIGNED_BYTE& displacement) {
-
+	WORD address = ixiyreg + displacement;
+	reg = m_ContextZ80.m_FuncPtrRead(address);
+	CPU_RESET_BIT(reg, bit);
+	m_ContextZ80.m_FuncPtrWrite(address, reg);
+	m_ContextZ80.m_OpcodeCycle = 23;
 }
 
+// WHEN EDITING THIS ALSO EDIT CPU_RESET_BIT
 void Z80::CPU_RESET_BIT_MEM(WORD address, int bit) {
-
+	BYTE mem = m_ContextZ80.m_FuncPtrRead(address);
+	mem = BitReset(mem, bit);
+	m_ContextZ80.m_FuncPtrWrite(address, mem);
+	m_ContextZ80.m_OpcodeCycle = 15;
 }
 
 void Z80::CPU_TEST_BIT(BYTE reg, int bit, int cycles) {
@@ -716,19 +831,33 @@ void Z80::CPU_TEST_BIT(BYTE reg, int bit, int cycles) {
 }
 
 void Z80::CPU_DDFD_TEST_BIT(BYTE& reg, int bit, WORD& ixiyreg, SIGNED_BYTE& displacement) {
-
+	WORD address = ixiyreg + displacement;
+	reg = m_ContextZ80.m_FuncPtrRead(address);
+	CPU_TEST_BIT(reg, bit, 0);
+	m_ContextZ80.m_FuncPtrWrite(address, reg);
+	m_ContextZ80.m_OpcodeCycle = 20;
 }
 
+// WHEN EDITING THIS ALSO EDIT CPU_SET_BIT_MEM
 void Z80::CPU_SET_BIT(BYTE& reg, int bit) {
-
+	reg = BitSet(reg, bit);
+	m_ContextZ80.m_OpcodeCycle = 8;
 }
 
 void Z80::CPU_DDFD_SET_BIT(BYTE& reg, int bit, WORD& ixiyreg, SIGNED_BYTE& displacement) {
-
+	WORD address = ixiyreg + displacement;
+	reg = m_ContextZ80.m_FuncPtrRead(address);
+	CPU_SET_BIT(reg, bit);
+	m_ContextZ80.m_FuncPtrWrite(address, reg);
+	m_ContextZ80.m_OpcodeCycle = 23;
 }
 
+// WHEN EDITING THIS ALSO EDIT CPU_SET_BIT
 void Z80::CPU_SET_BIT_MEM(WORD address, int bit) {
-
+	BYTE mem = m_ContextZ80.m_FuncPtrRead(address);
+	mem = BitSet(mem, bit);
+	m_ContextZ80.m_FuncPtrWrite(address, mem);
+	m_ContextZ80.m_OpcodeCycle = 15;
 }
 
 void Z80::CPU_IN(BYTE& data) {
@@ -763,20 +892,72 @@ void Z80::CPU_OUTDR() {
 
 }
 
-void Z80::CPU_CPI() {
+// Compare and increment
+BYTE Z80::CPU_CPI() {
+	bool carry = TestBit(m_ContextZ80.m_RegisterAF.lo, FLAG_C);
+	BYTE result = m_ContextZ80.m_FuncPtrRead(m_ContextZ80.m_RegisterHL.reg);
+	CPU_8BIT_CMPR(m_ContextZ80.m_RegisterAF.hi, result, 0, false);
+	CPU_16BIT_INC(m_ContextZ80.m_RegisterHL.reg, 0);
+	CPU_16BIT_DEC(m_ContextZ80.m_RegisterBC.reg, 0);
 
+	if (m_ContextZ80.m_RegisterBC.reg == 0)
+		m_ContextZ80.m_RegisterAF.lo = BitReset(m_ContextZ80.m_RegisterAF.lo, FLAG_PV);
+	else
+		m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_PV);
+
+	if (!carry)
+		m_ContextZ80.m_RegisterAF.lo = BitReset(m_ContextZ80.m_RegisterAF.lo, FLAG_C);
+	else
+		m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_C);
+
+	m_ContextZ80.m_OpcodeCycle = 16;
+	return result;
 }
 
 void Z80::CPU_CPIR() {
+	BYTE hladdress = CPU_CPI();
 
+	// Call until b = 0
+	if ((m_ContextZ80.m_RegisterBC.reg != 0) && (hladdress != m_ContextZ80.m_RegisterAF.hi)) {
+		m_ContextZ80.m_OpcodeCycle = 21;
+		m_ContextZ80.m_ProgramCounter -= 2;
+	}
+	else
+		m_ContextZ80.m_OpcodeCycle = 16;
 }
 
-void Z80::CPU_CPD() {
+BYTE Z80::CPU_CPD() {
+	bool carry = TestBit(m_ContextZ80.m_RegisterAF.lo, FLAG_C);
+	BYTE result = m_ContextZ80.m_FuncPtrRead(m_ContextZ80.m_RegisterHL.reg);
 
+	CPU_8BIT_CMPR(m_ContextZ80.m_RegisterAF.hi, result, 0, false);
+	CPU_16BIT_DEC(m_ContextZ80.m_RegisterHL.reg, 0);
+	CPU_16BIT_DEC(m_ContextZ80.m_RegisterBC.reg, 0);
+
+	if (m_ContextZ80.m_RegisterBC.reg == 0)
+		m_ContextZ80.m_RegisterAF.lo = BitReset(m_ContextZ80.m_RegisterAF.lo, FLAG_PV);
+	else
+		m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_PV);
+
+	if(!carry)
+		m_ContextZ80.m_RegisterAF.lo = BitReset(m_ContextZ80.m_RegisterAF.lo, FLAG_C);
+	else
+		m_ContextZ80.m_RegisterAF.lo = BitReset(m_ContextZ80.m_RegisterAF.lo, FLAG_C);
+
+	m_ContextZ80.m_OpcodeCycle = 16;
+	return result;
 }
 
 void Z80::CPU_CPDR() {
-
+	BYTE hladdress = CPU_CPD();
+	
+	// Call until bc = 0 or a = hladdress
+	if ((m_ContextZ80.m_RegisterBC.reg != 0) && (hladdress != m_ContextZ80.m_RegisterAF.hi)) {
+		m_ContextZ80.m_OpcodeCycle = 21;
+		m_ContextZ80.m_ProgramCounter -= 2;
+	}
+	else
+		m_ContextZ80.m_OpcodeCycle = 16;
 }
 
 void Z80::CPU_INI() {
