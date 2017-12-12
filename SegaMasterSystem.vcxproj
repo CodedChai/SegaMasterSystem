@@ -99,10 +99,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Config.h" />
+    <ClInclude Include="Emulator.h" />
     <ClInclude Include="MasterSystem.h" />
     <ClInclude Include="Z80.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="MasterSystem.cpp" />
     <ClCompile Include="Z80.cpp" />
   </ItemGroup>
   <ItemGroup>

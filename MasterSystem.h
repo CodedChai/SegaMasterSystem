@@ -4,14 +4,10 @@
 
 class Emulator;
 
-#ifdef WIN32
 #include <Windows.h>
 #include "SDL.h"
 #include "SDL_opengl.h"
-#else
-#include <SDL/SDL.h>
-#include <SDL/SDL_opengl.h>
-#endif
+
 
 class MasterSystem
 {
@@ -19,7 +15,7 @@ public:
 	static MasterSystem* CreateInstance();
 
 	bool CreateSDLWindow();
-	void StartROM(const char* path);
+	void StartRom(const char* path);
 	void BeginGame(int fps, bool useGfxOpt);
 	unsigned char GetMemoryByte(int i);
 

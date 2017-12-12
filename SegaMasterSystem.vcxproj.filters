@@ -24,9 +24,15 @@
     <ClInclude Include="MasterSystem.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="Emulator.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Z80.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MasterSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
