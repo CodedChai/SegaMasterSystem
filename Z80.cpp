@@ -1178,15 +1178,51 @@ void Z80::CPU_INDR() {
 }
 
 void Z80::CPU_LDI() {
+	BYTE hldata = m_ContextZ80.m_FuncPtrRead(m_ContextZ80.m_RegisterHL.reg);
+	m_ContextZ80.m_FuncPtrWrite(m_ContextZ80.m_RegisterDE.reg, hldata);
 
+	CPU_16BIT_INC(m_ContextZ80.m_RegisterBC.reg, 0);
+	CPU_16BIT_INC(m_ContextZ80.m_RegisterDE.reg, 0);
+	CPU_16BIT_INC(m_ContextZ80.m_RegisterHL.reg, 0);
+
+	m_ContextZ80.m_RegisterAF.lo = BitReset(m_ContextZ80.m_RegisterAF.lo, FLAG_N);
+	m_ContextZ80.m_RegisterAF.lo = BitReset(m_ContextZ80.m_RegisterAF.lo, FLAG_H);
+
+	if (m_ContextZ80.m_RegisterBC.reg == 0)
+		m_ContextZ80.m_RegisterAF.lo = BitReset(m_ContextZ80.m_RegisterAF.lo, FLAG_PV);
+	else
+		m_ContextZ80.m_RegisterAF.lo = BitSet(m_ContextZ80.m_RegisterAF.lo, FLAG_PV);
+
+	hldata += m_ContextZ80.m_RegisterAF.hi;
+
+	m_ContextZ80.m_OpcodeCycle = 16;
 }
 
 void Z80::CPU_LDIR() {
+	CPU_LDI();
 
+	// Keep calling until reg BC = 0
+	if (m_ContextZ80.m_RegisterBC.reg != 0) {
+		m_ContextZ80.m_ProgramCounter -= 2;
+		m_ContextZ80.m_OpcodeCycle = 21;
+	}
+	else {
+		m_ContextZ80.m_OpcodeCycle = 16;
+		m_ContextZ80.m_RegisterAF.lo = BitReset(m_ContextZ80.m_RegisterAF.lo, FLAG_PV);
+	}
 }
 
 void Z80::CPU_DJNZ() {
+	m_ContextZ80.m_RegisterBC.hi--;
+	m_ContextZ80.m_OpcodeCycle = 8;
 
+	if (m_ContextZ80.m_RegisterBC.hi != 0) {
+		SIGNED_BYTE n = (SIGNED_BYTE)m_ContextZ80.m_FuncPtrRead(m_ContextZ80.m_ProgramCounter);
+		m_ContextZ80.m_ProgramCounter += n;
+		m_ContextZ80.m_OpcodeCycle = 13;
+	}
+
+	m_ContextZ80.m_ProgramCounter++;
 }
 
 void Z80::CPU_LDD() {
@@ -1210,7 +1246,10 @@ void Z80::CPU_REG_LOAD_NNN(WORD& reg) {
 }
 
 void Z80::CPU_EXCHANGE(WORD& reg1, WORD& reg2) {
-
+	m_ContextZ80.m_OpcodeCycle = 4;
+	WORD temp = reg1;
+	reg1 = reg2;
+	reg2 = temp;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
